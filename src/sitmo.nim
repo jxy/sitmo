@@ -167,7 +167,7 @@ proc skip*(r:var sitmo, z:uint64) =
   let c = 8u16 - r.oCounter # Left over of the current block (No underflow for oCounter <= 8)
   # Check if we stay in the current block
   if z < c:
-    r.oCounter += cast[uint16](z)
+    r.oCounter += z.uint16
     return
   # We will have to generate a new block
   z -= c                       # Discard the remainder of the current block
