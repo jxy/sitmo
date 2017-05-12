@@ -5,9 +5,10 @@ license     = "MIT"
 srcDir      = "src"
 
 task test, "Runs the test suite":
-  withDir "test":
-    exec "nim c -r -d:release t"
+  --define: release
+  --path: "src"
+  --run
+  setCommand "c", "test/t.nim"
 
 task docgen, "Regenerate the documentation":
-  withDir "doc":
-    exec "nim doc2 ../src/sitmo.nim"
+  exec "nim doc2 --out:doc/sitmo.html src/sitmo.nim"
