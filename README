@@ -1,0 +1,58 @@
+NAME
+     Nim implementation of the Sitmo parallel random number generator
+
+DESCRIPTION
+     This implementation in Nim follows the original C++
+     implementation from Sitmo.  The implementation is based on a
+     paper by John Salmon and Mark Moraes and described in their
+     paper “Parallel Random Numbers: As Easy as 1, 2,
+     3”. (Proceedings of 2011 International Conference for High
+     Performance Computing, Networking, Storage and
+     Analysis). The algorithm is based on the Threefish
+     cryptographic cipher.  It is usable for large scale parallel
+     processing:
+
+          1. O(1) and neglect-able skip ahead cost for block and
+             leap-frogging parallelism.
+          2. 32 bit seed offers 2^32 (4 billion) parallel random
+             streams of length 2^256.
+          3. Streams are guaranteed to be non-overlapping.
+
+     The object, `sitmo', contains the state of the RNG.  The
+     procedure `newsitmo' creates such object.  `seed' seeds the
+     RNG, and `random' returns a `uint32' random number while
+     advancing the internal state of the RNG.  There is only O(1)
+     skip ahead cost, and the procedure `skip' advances the state
+     of the RNG by a given amount (`uint64').  For details, see
+     the documentation file `doc/sitmo.html'.
+
+SYNOPSIS
+     type sitmo* = object
+       s*,k*,o*: array[4,uint64]
+       oCounter*: uint16
+     proc seed*(r:var sitmo)
+     proc seed*(r:var sitmo, s:uint32)
+     proc newsitmo*:sitmo
+     proc newsitmo*(s:uint32):sitmo
+     proc newsitmo*(r:sitmo):sitmo
+     proc random*(r:var sitmo):uint32
+     proc skip*(r:var sitmo, z:uint64)
+     proc `==`*(x,y:sitmo):bool
+     template `!=`*(x,y:sitmo):bool
+     proc setKey*(r:var sitmo, k0,k1,k2,k3:uint64 = 0)
+     proc setCounter*(r:var sitmo, s0,s1,s2,s3:uint64 = 0; oCounter:uint16 = 0)
+
+EXAMPLES
+     import sitmo
+     var r = newsitmo()
+     r.seed(0x7FFFFFFFu32)
+     echo r.random
+     r.skip(0xFFFFFFFFFFFFFFFFu64)
+     echo r.random
+
+LICENSE
+     This works is licensed under the MIT license.  See file
+     LICENSE for details.
+
+SEE ALSO
+     Sitmo PRNG: https://www.sitmo.com/?p=1206
