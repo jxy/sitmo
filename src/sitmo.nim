@@ -45,21 +45,27 @@ This RNG engine is usable for large scale parallel processing:
 
 template mix2(x0,x1:var uint64; rx:SomeInteger;
               z0,z1:var uint64; rz:SomeInteger):auto =
+  const
+    x = 64 - rx
+    z = 64 - rz
   x0 += x1
   z0 += z1
-  x1 = (x1 shl rx) or (x1 shr (64-rx))
-  z1 = (z1 shl rz) or (z1 shr (64-rz))
+  x1 = (x1 shl rx) or (x1 shr x)
+  z1 = (z1 shl rz) or (z1 shr z)
   x1 = x1 xor x0
   z1 = z1 xor z0
 template mixk(x0,x1:var uint64; rx:SomeInteger;
               z0,z1:var uint64; rz:SomeInteger;
               k0,k1,l0,l1:uint64):auto =
+  const
+    x = 64 - rx
+    z = 64 - rz
   x1 += k1
   z1 += l1
   x0 += x1+k0
   z0 += z1+l0
-  x1 = (x1 shl rx) or (x1 shr (64-rx))
-  z1 = (z1 shl rz) or (z1 shr (64-rz))
+  x1 = (x1 shl rx) or (x1 shr x)
+  z1 = (z1 shl rz) or (z1 shr z)
   x1 = x1 xor x0
   z1 = z1 xor z0
 
@@ -70,36 +76,43 @@ type sitmo* = object
 
 proc encryptCounter(r:var sitmo) =
   var
-    b:array[4, uint64]
-    k:array[5, uint64]
-  for i in 0..3: b[i] = r.s[i]
-  for i in 0..3: k[i] = r.k[i]
-  k[4] = 0x1BD11BDAA9FC1A22u64 xor k[0] xor k[1] xor k[2] xor k[3]
-  mixk(b[0], b[1], 14,   b[2], b[3], 16,   k[0], k[1], k[2], k[3])
-  mix2(b[0], b[3], 52,   b[2], b[1], 57)
-  mix2(b[0], b[1], 23,   b[2], b[3], 40)
-  mix2(b[0], b[3],  5,   b[2], b[1], 37)
-  mixk(b[0], b[1], 25,   b[2], b[3], 33,   k[1], k[2], k[3], k[4]+1)
-  mix2(b[0], b[3], 46,   b[2], b[1], 12)
-  mix2(b[0], b[1], 58,   b[2], b[3], 22)
-  mix2(b[0], b[3], 32,   b[2], b[1], 32)
+    b0 = r.s[0]
+    b1 = r.s[1]
+    b2 = r.s[2]
+    b3 = r.s[3]
+  let
+    k0 = r.k[0]
+    k1 = r.k[1]
+    k2 = r.k[2]
+    k3 = r.k[3]
+    k4 = 0x1BD11BDAA9FC1A22u64 xor k0 xor k1 xor k2 xor k3
+  mixk(b0, b1, 14,   b2, b3, 16,   k0, k1, k2, k3)
+  mix2(b0, b3, 52,   b2, b1, 57)
+  mix2(b0, b1, 23,   b2, b3, 40)
+  mix2(b0, b3,  5,   b2, b1, 37)
+  mixk(b0, b1, 25,   b2, b3, 33,   k1, k2, k3, k4+1)
+  mix2(b0, b3, 46,   b2, b1, 12)
+  mix2(b0, b1, 58,   b2, b3, 22)
+  mix2(b0, b3, 32,   b2, b1, 32)
 
-  mixk(b[0], b[1], 14,   b[2], b[3], 16,   k[2], k[3], k[4], k[0]+2)
-  mix2(b[0], b[3], 52,   b[2], b[1], 57)
-  mix2(b[0], b[1], 23,   b[2], b[3], 40)
-  mix2(b[0], b[3],  5,   b[2], b[1], 37)
-  mixk(b[0], b[1], 25,   b[2], b[3], 33,   k[3], k[4], k[0], k[1]+3)
+  mixk(b0, b1, 14,   b2, b3, 16,   k2, k3, k4, k0+2)
+  mix2(b0, b3, 52,   b2, b1, 57)
+  mix2(b0, b1, 23,   b2, b3, 40)
+  mix2(b0, b3,  5,   b2, b1, 37)
+  mixk(b0, b1, 25,   b2, b3, 33,   k3, k4, k0, k1+3)
 
-  mix2(b[0], b[3], 46,   b[2], b[1], 12)
-  mix2(b[0], b[1], 58,   b[2], b[3], 22)
-  mix2(b[0], b[3], 32,   b[2], b[1], 32)
+  mix2(b0, b3, 46,   b2, b1, 12)
+  mix2(b0, b1, 58,   b2, b3, 22)
+  mix2(b0, b3, 32,   b2, b1, 32)
 
-  mixk(b[0], b[1], 14,   b[2], b[3], 16,   k[4], k[0], k[1], k[2]+4)
-  mix2(b[0], b[3], 52,   b[2], b[1], 57)
-  mix2(b[0], b[1], 23,   b[2], b[3], 40)
-  mix2(b[0], b[3],  5,   b[2], b[1], 37)
-  for i in 0..3: r.o[i] = b[i] + k[i]
-  r.o[3] += 5
+  mixk(b0, b1, 14,   b2, b3, 16,   k4, k0, k1, k2+4)
+  mix2(b0, b3, 52,   b2, b1, 57)
+  mix2(b0, b1, 23,   b2, b3, 40)
+  mix2(b0, b3,  5,   b2, b1, 37)
+  r.o[0] = b0 + k0
+  r.o[1] = b1 + k1
+  r.o[2] = b2 + k2
+  r.o[3] = b3 + k3 + 5
 proc incCounter(r:var sitmo) =
   r.s[0].inc
   if r.s[0] != 0: return
@@ -109,7 +122,7 @@ proc incCounter(r:var sitmo) =
   if r.s[2] != 0: return
   r.s[3].inc
 proc incCounter(r:var sitmo, z:uint64) =
-  if z > 0xFFFFFFFFFFFFFFFFu64 - r.s[0]:
+  if z > not r.s[0]:
     r.s[1].inc
     if r.s[1] == 0:
       r.s[2].inc
@@ -171,7 +184,7 @@ proc skip*(r:var sitmo, z:uint64) =
     return
   # We will have to generate a new block
   z -= c                       # Discard the remainder of the current block
-  r.oCounter = uint16(z mod 8) # Set the pointer in the correct element in the new block
+  r.oCounter = uint16(z and 7) # Set the pointer in the correct element in the new block
   z -= r.oCounter              # Update z
   z = z shr 3                  # The number of buffers is elements/8
   inc z                        # and one more because we crossed the buffer line
@@ -201,5 +214,5 @@ proc setCounter*(r:var sitmo, s0,s1,s2,s3:uint64 = 0; oCounter:uint16 = 0) =
   r.s[1] = s1
   r.s[2] = s2
   r.s[3] = s3
-  r.oCounter = oCounter mod 8
+  r.oCounter = oCounter and 7
   r.encryptCounter
