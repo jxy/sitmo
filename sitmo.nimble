@@ -1,4 +1,4 @@
-version     = "0.0.1"
+version     = "0.0.2"
 author      = "Xiao-Yong Jin"
 description = "Sitmo parallel random number generator in Nim"
 license     = "MIT"

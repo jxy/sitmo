@@ -167,7 +167,7 @@ proc random*(r:var sitmo):uint32 =
   if r.oCounter < 8:
     let i:uint16 = r.oCounter shr 1
     r.oCounter.inc
-    if (r.oCounter and 1) > 0: return uint32(r.o[i] and 0xFFFFFFFFu64)
+    if (r.oCounter and 1) > 0u16: return uint32(r.o[i] and 0xFFFFFFFFu64)
     else: return uint32(r.o[i] shr 32)
   # Generate a new block and return the first 32 bits.
   r.incCounter
